@@ -503,6 +503,12 @@ by surprise.
 
 ## Deploying to AWS ECS (Fargate)
 
+> 🔰 **New to Docker/AWS?** There's a **complete-beginner, click-by-click runbook** in
+> [`notebooks/deploy_docker_and_aws_ecs.ipynb`](notebooks/deploy_docker_and_aws_ecs.ipynb)
+> — it builds & tests the container locally (with real, captured output) and then walks the
+> **AWS Console** (ECR → ECS Fargate) step by step, plus cleanup and troubleshooting. The
+> CLI section below is the terminal-first equivalent of that same flow.
+
 This mirrors the assignment's steps (build & push to ECR → create a Fargate
 cluster → register a task definition → run the task → hit its public IP on
 port 5000), spelled out with exact commands. Console-based steps work
