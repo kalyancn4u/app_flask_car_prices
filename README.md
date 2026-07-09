@@ -295,6 +295,73 @@ the file was a raw `.csv`. Compressing the dataset was therefore a
 See the next section for the actual size saved and why `.gz` was chosen over
 a `.zip` archive.
 
+### Inspecting the dataset file (it won't open in Excel — that's expected)
+
+The dataset here is `cars24-car-price-cleaned-new.csv.gz` — a normal CSV
+(comma-separated plain text) that has simply been **gzip-compressed**. Two
+things newcomers trip over:
+
+- **Double-clicking it does *not* open Excel.** On Windows, a bare `.csv` is
+  associated with Excel, so clicking one opens it there. But this file's
+  extension is **`.gz`**, so Windows hands it to an **archive tool**
+  (7-Zip / WinRAR / the built-in extractor) instead. That's correct — it's a
+  compressed archive, not a spreadsheet. You don't need to extract it: the API's
+  training script reads it directly.
+- **Excel mangles CSVs anyway.** Even the uncompressed form is risky to open in
+  Excel and re-save: it strips leading zeros (`007` → `7`), turns long numbers
+  into scientific notation (`9.19E+09`), and reinterprets values like `3-4` as
+  dates. Treat Excel as a last-resort *viewer*, never an editor, for raw data.
+
+**How to look inside safely** (no full extraction needed):
+
+| Goal | Command |
+| :--- | :------ |
+| Peek at the first rows | `zcat training/data/…csv.gz \| head` (Git Bash), or `gzip -dc file.csv.gz \| head` |
+| Load a sample in Python | `pd.read_csv("training/data/…csv.gz", nrows=5)` — pandas decompresses on the fly |
+| Confirm the true format | `file training/data/…csv.gz` (reads the file's magic bytes, ignoring its name) |
+| See real extensions in Explorer | View → **File name extensions** (Windows hides them, so `data.csv` may really be `data.csv.gz`) |
+
+### Storage-format alternatives — measured on *this* dataset
+
+Compressing the CSV to `.gz` is the *cheapest* size win (§ next section covers
+`.gz` vs `.zip`), but it isn't the only option. Here's the fuller landscape,
+written from the same 19,820 × 17 table; read time is the fastest of 5 pandas
+reads on one machine (absolute numbers vary — the **ranking** is the point):
+
+| Format | File size | vs CSV | Read speed | Human-readable? | Excel double-click? | Keeps column types? |
+| :----- | --------: | -----: | ---------: | :-------------- | :------------------ | :------------------ |
+| **CSV (raw)** | 1,535 KB | 100 % | 25 ms | ✅ plain text | ✅ yes | ❌ everything is text |
+| **CSV + gzip** (`.csv.gz`) — shipped here | 290 KB | 19 % | 28 ms | ⚠️ after unzip | ❌ archive tool | ❌ |
+| **CSV + xz / LZMA** (`.csv.xz`) | 163 KB | 11 % | 34 ms | ⚠️ after unzip | ❌ | ❌ |
+| **CSV + bzip2** (`.csv.bz2`) | 151 KB | 10 % | 74 ms | ⚠️ after unzip | ❌ | ❌ |
+| **Parquet** (snappy) | 274 KB | 18 % | **7 ms** | ❌ binary | ❌ needs tools | ✅ yes |
+| **Parquet** (zstd) | 227 KB | 14 % | **7 ms** | ❌ binary | ❌ | ✅ yes |
+| **Feather / Arrow** | 867 KB | 57 % | **5 ms** | ❌ binary | ❌ | ✅ yes |
+
+**How to read it:**
+
+- **Smallest on disk:** `CSV + bzip2` (10 %), but the **slowest to read** (~3× a
+  raw CSV) — good for cold archival, poor for a file you load often.
+- **Best size/speed balance for a git repo:** **`CSV + gzip`** (what this project
+  ships) — 5× smaller than raw CSV, reads just as fast, one command to produce,
+  and pandas reads it with zero code change. That combination is exactly why it
+  was chosen here over the alternatives.
+- **Best for real data pipelines:** **Parquet** — nearly as small as gzip **and
+  ~3–4× faster to read**, because it's *columnar* and preserves each column's
+  type (no dtype guessing on load). Needs `pyarrow`; it's the analytics default.
+  If this dataset grew to millions of rows, Parquet would be the switch to make.
+- **Fastest read, size no object:** **Feather/Arrow** — near-instant but ~3×
+  larger than Parquet; best for short-lived local hand-offs, not for shipping.
+- **Most universal & readable:** **raw CSV** — opens anywhere with no library;
+  the price is size and lost type information.
+
+> 🧭 **Rules of thumb:** *human sharing / tiny files* → **CSV**; *shrinking a CSV
+> in a repo with zero friction* → **CSV + gzip** (this project); *a real
+> analytics workflow or a large dataset* → **Parquet**; *maximum read speed for
+> temporary local files* → **Feather**. Avoid **pickle** for datasets — fast,
+> but it runs arbitrary code on load (a security risk) and breaks across
+> library versions.
+
 ---
 
 ## Repository size & Git LFS — do we need it?
