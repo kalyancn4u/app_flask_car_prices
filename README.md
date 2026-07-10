@@ -35,7 +35,7 @@ without any of the Streamlit app's code.
 ## Project structure
 
 ```
-app_flask_car_prices/
+app_car_prices_flask/
 ├── app.py                  # Flask routes: /, /health, /predict
 ├── car_model.py             # Feature engineering + prediction (no Flask imports)
 ├── wsgi.py                  # Entry point gunicorn uses: `gunicorn wsgi:app`
@@ -72,7 +72,7 @@ nothing in it can accidentally depend on training-only code.
 ## Quick start (no Docker)
 
 ```bash
-cd app_flask_car_prices
+cd app_car_prices_flask
 python -m venv venv
 venv\Scripts\Activate.ps1        # Windows PowerShell
 # source venv/bin/activate       # macOS / Linux
@@ -717,7 +717,7 @@ so a decision doesn't have to be re-litigated (or re-benchmarked) later. Each
 entry links to the section with the full detail; this is the index.
 
 1. **Created this app as a separate, self-contained sibling to the parent
-   Streamlit project**, in `app_flask_car_prices/`, so it can be split into
+   Streamlit project**, in `app_car_prices_flask/`, so it can be split into
    its own git repository later without carrying anything it doesn't need.
    See [Project structure](#project-structure).
 
@@ -810,7 +810,7 @@ entry links to the section with the full detail; this is the index.
 
 Four sibling projects built on the same Cars24 dataset:
 
-- 🎛️ **[Streamlit web app →](https://github.com/kalyancn4u/app_streamlit_car_prices)** — interactive price-predictor UI
+- 🎛️ **[Streamlit web app →](https://github.com/kalyancn4u/app_car_prices_streamlit)** — interactive price-predictor UI
 - 🐳 **Flask REST API** — containerised API (Docker + AWS ECS/Fargate) · _you are here_
-- 🔬 **[MLOps lifecycle →](https://github.com/kalyancn4u/app_mlops_car_prices)** — full SDLC: notebooks → production pipeline
-- 🛠️ **[Pipeline starter →](https://github.com/kalyancn4u/app_pipeline_car_prices)** — beginner-friendly guide + test stubs to extend
+- 🔬 **[MLOps lifecycle →](https://github.com/kalyancn4u/app_car_prices_mlops)** — full SDLC: notebooks → production pipeline
+- 🛠️ **[Pipeline starter →](https://github.com/kalyancn4u/app_car_prices_pipeline)** — beginner-friendly guide + test stubs to extend

@@ -27,7 +27,7 @@ Key facts about the dataset (see DESIGN_NOTES.md for the full rationale):
   * Only ``make`` and ``model`` are free-text and get one-hot encoded inside the
     pipeline (``handle_unknown='ignore'`` so unseen values degrade gracefully).
 
-This copy lives under app_flask_car_prices/training/ and is deliberately kept
+This copy lives under app_car_prices_flask/training/ and is deliberately kept
 separate from the Flask API in the parent folder: *training a model* and
 *serving a model* are different workflows with different dependencies, run
 cadence, and compute needs. The Docker image that serves predictions never
@@ -35,7 +35,7 @@ needs pandas' full training stack or the raw CSV baked in, only the small
 .pkl/.json files this script produces, which is why they live in ../models
 instead of here.
 
-Run (from inside app_flask_car_prices/training/):
+Run (from inside app_car_prices_flask/training/):
     python train_model.py
 """
 
@@ -63,7 +63,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 CONFIG = {
     # Paths (relative to this training/ folder; artifacts are written one
-    # level up into app_flask_car_prices/models/ so the Flask app can load
+    # level up into app_car_prices_flask/models/ so the Flask app can load
     # them without any knowledge of how they were produced).
     # Stored gzip-compressed to keep the repo small (~81% smaller: 1.5 MB ->
     # ~290 KB — see README "Repository size"). pandas.read_csv() infers the
