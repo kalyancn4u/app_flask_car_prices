@@ -83,6 +83,7 @@ class CarPriceModel:
         self.metadata: Dict[str, Any] | None = None
 
     def load(self) -> None:
+        """Load the trained models and JSON config from `models_dir` (raises ModelNotLoaded if missing)."""
         try:
             self.price_model = joblib.load(self.models_dir / "price_model.pkl")
             self.range_model = joblib.load(self.models_dir / "range_model.pkl")
@@ -104,10 +105,12 @@ class CarPriceModel:
 
     @property
     def is_loaded(self) -> bool:
+        """True once the models have been loaded."""
         return self.price_model is not None
 
     # -- metadata lookups --------------------------------------------------
     def _resolve_make_model(self, make: str, model: str) -> Tuple[str, str]:
+        """Validate and uppercase the make/model, raising ValueError if unknown."""
         make = make.strip().upper()
         model = model.strip().upper()
         makes_models = self.metadata["makes_models"]
@@ -143,10 +146,12 @@ class CarPriceModel:
         )
 
     def _numeric_default(self, name: str) -> float:
+        """Return the median default for a numeric feature from the metadata."""
         return self.metadata["numeric_features"][name]["default"]
 
     # -- prediction ----------------------------------------------------------
     def predict(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Turn a car-description payload into a price estimate and a Low/Medium/High band."""
         if not self.is_loaded:
             raise ModelNotLoaded("Models are not loaded.")
 

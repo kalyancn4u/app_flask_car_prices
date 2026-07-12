@@ -117,12 +117,14 @@ CONFIG = {
 # ---------------------------------------------------------------------------
 
 def banner(text: str) -> None:
+    """Print a section banner to the console."""
     print("\n" + "=" * 68)
     print(text)
     print("=" * 68)
 
 
 def step(text: str) -> None:
+    """Print an indented progress line to the console."""
     print(f"-> {text}")
 
 
@@ -277,6 +279,7 @@ def build_option_tables(df: pd.DataFrame) -> Tuple[Dict, Dict]:
     work["_seats"] = seats
 
     def options(group) -> Dict:
+        """Return the fuel/transmission/seats value lists seen in `group`, most-common first."""
         return {
             "fuel": group["_fuel"].value_counts().index.tolist(),
             "transmission": group["_transmission"].value_counts().index.tolist(),
@@ -376,11 +379,13 @@ def split_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, List[str]]:
 # ---------------------------------------------------------------------------
 
 def save_json(obj, path: str) -> None:
+    """Write `obj` to `path` as pretty-printed UTF-8 JSON."""
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, indent=2, ensure_ascii=False)
 
 
 def save_artifacts(price_model, range_model, feature_columns, range_config, metadata):
+    """Persist both models plus the feature/range/metadata JSON, printing each file's size."""
     os.makedirs(CONFIG["models_dir"], exist_ok=True)
     # LZMA beats joblib's default zlib backend on both axes for these forests:
     # ~30% smaller AND faster to load (benchmarked on the real artifacts —
@@ -404,6 +409,7 @@ def save_artifacts(price_model, range_model, feature_columns, range_config, meta
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    """Run the full training pipeline: load -> clean -> bin -> fit both models -> evaluate -> save artifacts."""
     banner("Car Price & Range Predictor - Training")
 
     df = load_dataset()

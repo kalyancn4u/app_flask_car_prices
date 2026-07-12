@@ -33,6 +33,7 @@ except ModelNotLoaded as exc:
 
 @app.get("/")
 def index():
+    """GET / -- service info plus a usage example."""
     return jsonify({
         "service": "car-price-predictor",
         "status": "ok" if car_model.is_loaded else "models_not_loaded",
@@ -49,6 +50,7 @@ def index():
 
 @app.get("/health")
 def health():
+    """GET /health -- 200 if the models are loaded, 503 otherwise (the ECS health check)."""
     if not car_model.is_loaded:
         return jsonify({"status": "unhealthy", "reason": "models not loaded"}), 503
     return jsonify({"status": "healthy"})
@@ -56,6 +58,7 @@ def health():
 
 @app.post("/predict")
 def predict():
+    """POST /predict -- return a price estimate and band for the posted car JSON."""
     if not car_model.is_loaded:
         return jsonify({"error": "Models are not loaded on the server. Check /health."}), 503
 
@@ -77,6 +80,7 @@ def predict():
 
 @app.errorhandler(405)
 def method_not_allowed(_exc):
+    """405 handler -- explain that /predict needs POST, not GET."""
     return jsonify({
         "error": "Method not allowed.",
         "hint": "/predict only accepts POST with a JSON body. A browser visiting "
@@ -86,6 +90,7 @@ def method_not_allowed(_exc):
 
 @app.errorhandler(404)
 def not_found(_exc):
+    """404 handler -- list the available endpoints."""
     return jsonify({
         "error": "Not found.",
         "available_endpoints": ["/", "/health", "/predict"],

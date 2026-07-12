@@ -126,6 +126,10 @@ README — see [Quick start] above; it isn't a hypothetical.)
 
 ## The API
 
+> 📗 **Usage recipes:** [`docs/API_EXAMPLES.md`](docs/API_EXAMPLES.md) has copy-paste examples
+> for the `CarPriceModel` class, the REST endpoints (curl / requests), and the Flask test
+> client — runnable in [`notebooks/api_examples.ipynb`](notebooks/api_examples.ipynb).
+
 | Method | Path       | Purpose                                             |
 | :----- | :--------- | :--------------------------------------------------- |
 | `GET`  | `/`        | Service info + a usage example (human-friendly)      |
