@@ -24,11 +24,12 @@ without any of the Streamlit app's code.
 3. [The API](#the-api)
 4. [Running with Docker — dev vs production, explained simply](#running-with-docker--dev-vs-production-explained-simply)
 5. [Retraining the models](#retraining-the-models)
-6. [Repository size & Git LFS — do we need it?](#repository-size--git-lfs--do-we-need-it)
-7. [Deploying to AWS ECS (Fargate)](#deploying-to-aws-ecs-fargate)
-8. [Testing the deployed app](#testing-the-deployed-app)
-9. [Troubleshooting](#troubleshooting)
-10. [Changelog & design decisions log](#changelog--design-decisions-log)
+6. [Reproducible rebuilds & the Python-version policy](#reproducible-rebuilds--the-python-version-policy)
+7. [Repository size & Git LFS — do we need it?](#repository-size--git-lfs--do-we-need-it)
+8. [Deploying to AWS ECS (Fargate)](#deploying-to-aws-ecs-fargate)
+9. [Testing the deployed app](#testing-the-deployed-app)
+10. [Troubleshooting](#troubleshooting)
+11. [Changelog & design decisions log](#changelog--design-decisions-log)
 
 ---
 
@@ -371,6 +372,56 @@ reads on one machine (absolute numbers vary — the **ranking** is the point):
 > temporary local files* → **Feather**. Avoid **pickle** for datasets — fast,
 > but it runs arbitrary code on load (a security risk) and breaks across
 > library versions.
+
+---
+
+## Reproducible rebuilds & the Python-version policy
+
+The API serves **pickled** scikit-learn models, and a pickle only loads under
+the *same* library versions it was saved with — a newer scikit-learn raises
+`InconsistentVersionWarning` and then an `AttributeError` at load time. The
+[`Makefile`](Makefile) removes that risk by making the environment that
+**trains** the models the very same one that **pins** the dependencies.
+
+```bash
+make rebuild      # fresh conda env -> retrain -> verify the models load -> re-pin
+make push         # commit the retrained models + refreshed pins, then push
+make help         # list every target
+```
+
+`make rebuild` runs `env -> train -> verify -> freeze`:
+
+- **env** creates a conda env on **Python 3.11** and installs both the serving
+  (`requirements.txt`) and training (`training/requirements.txt`) dependencies.
+- **train** runs `training/train_model.py`, writing fresh `models/*.pkl`.
+- **verify** loads both pickles to prove they unpickle cleanly.
+- **freeze** calls [`tools/pin_env.py`](tools/pin_env.py) to rewrite *both*
+  requirement files (comments preserved) and `.python-version` to the exact
+  versions that just produced the models — so the pins can never drift from the
+  artifacts, and neither can the `python:3.11-slim` Docker image.
+
+### Why Python 3.11?
+
+`numpy==1.26.x` / `scikit-learn==1.6.x` publish wheels only for **Python
+3.9–3.12**. 3.11 has wheels for every pin *and* matches the Dockerfile base
+image, so local, Docker and ECS all agree on one runtime.
+
+> ⚠️ **Do not** pair the current pins with Python 3.13/3.14 — numpy 1.26 has no
+> wheel there and the install fails outright. It's a contradiction, not a tweak.
+
+### If you ever need Python 3.13+
+
+Upgrade the whole stack and **retrain** (newer numpy 2.x ⇒ newer scikit-learn ⇒
+new `.pkl` files):
+
+```bash
+# Drop the ==... pins on numpy/pandas/scikit-learn/joblib in BOTH requirement
+# files (requirements.txt and training/requirements.txt), then:
+make rebuild PY=3.13    # a fresh 3.13 env installs the latest compatible set
+make freeze             # recapture the resolved versions + .python-version
+```
+
+Also bump the Dockerfile base image to `python:3.13-slim` to keep it in step.
 
 ---
 
